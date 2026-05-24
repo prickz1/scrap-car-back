@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-shm
+*.db-wal
+.env
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
