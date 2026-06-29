@@ -9,11 +9,12 @@ class Car(Base):
     __tablename__ = "cars"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    titulo: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Dados do veículo
-    marca: Mapped[str] = mapped_column(String(100), index=True)
-    modelo: Mapped[str] = mapped_column(String(100), index=True)
-    ano: Mapped[int]
+    marca: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
+    modelo: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
+    ano: Mapped[Optional[int]] = mapped_column(nullable=True)
     quilometragem: Mapped[Optional[int]] = mapped_column(nullable=True)
     preco: Mapped[float]
     combustivel: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

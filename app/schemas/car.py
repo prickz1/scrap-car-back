@@ -4,9 +4,10 @@ from pydantic import BaseModel
 
 
 class CarBase(BaseModel):
-    marca: str
-    modelo: str
-    ano: int
+    titulo: Optional[str] = None
+    marca: Optional[str] = None
+    modelo: Optional[str] = None
+    ano: Optional[int] = None
     quilometragem: Optional[int] = None
     preco: float
     combustivel: Optional[str] = None
