@@ -1,4 +1,4 @@
-.PHONY: run back build down logs
+.PHONY: run back build down scrape
 
 back:
 	docker compose up -d
@@ -11,5 +11,5 @@ build:
 down:
 	docker compose down
 
-logs:
-	docker compose logs -f backend
+scrape:
+	cmd.exe /c start run-scraper.bat
