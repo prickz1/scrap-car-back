@@ -38,7 +38,7 @@ async def pegar_anuncios():
             try:
                 anuncio = await extrair_anuncio(card)
                 anuncios.append(anuncio)
-                print(f"  [{i + 1}/{total}] {anuncio['titulo']} - R$ {anuncio['preco']}")
+                print(f"  [{i + 1}/{total}] {anuncio['titulo']} - R$ {anuncio['preco']} - {anuncio['quilometragem']} km")
             except Exception as erro:
                 print(f"  [{i + 1}/{total}] Falhou ao extrair: {erro}")
 

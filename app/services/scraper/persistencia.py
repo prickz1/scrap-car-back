@@ -13,6 +13,7 @@ async def salvar_anuncios(anuncios):
                 titulo=anuncio["titulo"],
                 preco=anuncio["preco"],
                 cidade=anuncio["cidade"],
+                quilometragem=anuncio["quilometragem"],
                 loja="OLX",
                 url_anuncio=anuncio["link"],
             )
