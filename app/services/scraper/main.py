@@ -1,6 +1,7 @@
 import asyncio
 import time
 from app.core.database import engine
+from app.services.scraper.config import TOTAL_PAGINAS
 from app.services.scraper.navegador import pegar_anuncios
 from app.services.scraper.persistencia import salvar_anuncios
 
@@ -8,20 +9,21 @@ engine.echo = False
 
 
 async def executar():
-    anuncios = await pegar_anuncios()
+    anuncios, falhados = await pegar_anuncios()
     print("Salvando no banco...")
     salvamento = await salvar_anuncios(anuncios)
-    return anuncios, salvamento
+    return anuncios, falhados, salvamento
 
 
 if __name__ == "__main__":
     inicio = time.perf_counter()
-    anuncios, salvamento = asyncio.run(executar())
+    anuncios, falhados, salvamento = asyncio.run(executar())
     tempo_gasto = time.perf_counter() - inicio
 
     print("=" * 50)
-    print(f"TOTAL COLETADO: {len(anuncios)} anúncios")
+    print(f"TOTAL COLETADO: {len(anuncios)} anúncios ({TOTAL_PAGINAS} página(s))")
+    print(f"FALHADOS:        {falhados}")
     print(f"SALVOS NO BANCO: {salvamento['salvos']}")
-    print(f"DUPLICADOS (ignorados): {salvamento['duplicados']}")
-    print(f"TEMPO GASTO: {tempo_gasto:.2f} segundos")
+    print(f"DUPLICADOS:      {salvamento['duplicados']}")
+    print(f"TEMPO GASTO:     {tempo_gasto:.2f} segundos")
     print("=" * 50)
