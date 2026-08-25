@@ -1,7 +1,7 @@
 import asyncio
 import time
 from app.core.database import engine
-from app.services.scraper.config import TOTAL_PAGINAS
+from app.services.scraper.config import TOTAL_PAGINAS, MAX_LOTES
 from app.services.scraper.navegador import pegar_anuncios
 from app.services.scraper.persistencia import salvar_anuncios
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     tempo_gasto = time.perf_counter() - inicio
 
     print("=" * 50)
-    print(f"TOTAL COLETADO: {len(anuncios)} anúncios ({TOTAL_PAGINAS} página(s))")
+    print(f"TOTAL COLETADO: {len(anuncios)} anúncios ({TOTAL_PAGINAS} páginas/lote | máx {MAX_LOTES} lotes)")
     print(f"FALHADOS:        {falhados}")
     print(f"SALVOS NO BANCO: {salvamento['salvos']}")
     print(f"DUPLICADOS:      {salvamento['duplicados']}")

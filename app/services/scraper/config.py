@@ -1,5 +1,6 @@
 URL_BASE = "https://www.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios/estado-mg?sp=2"
-TOTAL_PAGINAS = 10
+TOTAL_PAGINAS = 100
+MAX_LOTES = 50
 
 STEALTH_SCRIPT = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
