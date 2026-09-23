@@ -1,4 +1,4 @@
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from app.core.database import AsyncSessionLocal
 from app.models.car import Car
 
@@ -24,5 +24,8 @@ async def salvar_anuncios(anuncios):
             except IntegrityError:
                 await session.rollback()
                 duplicados += 1
+            except DBAPIError as erro:
+                await session.rollback()
+                print(f"  [erro ao salvar {anuncio['link']}]: {erro.orig}")
 
     return {"salvos": salvos, "duplicados": duplicados}

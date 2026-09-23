@@ -13,6 +13,10 @@ class CarBase(BaseModel):
     combustivel: Optional[str] = None
     cambio: Optional[str] = None
     cor: Optional[str] = None
+    tipo_veiculo: Optional[str] = None
+    potencia_motor: Optional[str] = None
+    direcao: Optional[str] = None
+    portas: Optional[int] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
     loja: str

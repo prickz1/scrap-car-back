@@ -1,4 +1,3 @@
-from playwright.async_api import async_playwright
 from app.services.scraper.config import URL_BASE, TOTAL_PAGINAS, SELETOR_CARD, STEALTH_SCRIPT
 from app.services.scraper.extrator import extrair_anuncio
 
@@ -57,20 +56,6 @@ async def extrair_pagina(page, preco_minimo, pagina: int) -> tuple:
     print(f"  Extraídos: {len(anuncios)} | Falhados: {falhados}")
     return anuncios, falhados
 
-
-async def extrair_lote(page, preco_minimo, lote_num: int) -> tuple:
-    anuncios_lote = []
-    falhados_lote = 0
-
-    for pagina in range(1, TOTAL_PAGINAS + 1):
-        anuncios, falhados = await extrair_pagina(page, preco_minimo, pagina)
-        anuncios_lote.extend(anuncios)
-        falhados_lote += falhados
-
-        if pagina < TOTAL_PAGINAS:
-            await page.wait_for_timeout(1000)
-
-    return anuncios_lote, falhados_lote
 
 
 async def criar_contexto(playwright):

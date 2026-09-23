@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
-from app.models.car import Car
+from app.models.car import Car  # noqa: F401 — registra o modelo em Base.metadata antes de init_db()
 from app.api.routes.cars import router as cars_router
 
 

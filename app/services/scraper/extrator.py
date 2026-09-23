@@ -5,6 +5,7 @@ from app.services.scraper.config import (
     SELETOR_PRECO,
     SELETOR_LOCALIZACAO,
     SELETOR_QUILOMETRAGEM,
+    KM_MAXIMO,
 )
 
 
@@ -42,4 +43,9 @@ async def extrair_quilometragem(card):
 
     texto = await km_locator.inner_text()
     numeros = re.sub(r"[^\d]", "", texto)
-    return int(numeros) if numeros else None
+    if not numeros:
+        return None
+
+    km = int(numeros)
+    # anunciantes às vezes colocam valores absurdos (ex: 99999999999)
+    return km if km <= KM_MAXIMO else None
