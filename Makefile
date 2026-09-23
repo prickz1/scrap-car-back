@@ -1,4 +1,4 @@
-.PHONY: run back build down scrape
+.PHONY: run back build down scrape enrich
 
 back:
 	docker compose up -d
@@ -13,3 +13,6 @@ down:
 
 scrape:
 	cmd.exe /c start run-scraper.bat
+
+enrich:
+	docker compose exec backend python -m app.scripts.enrichment.main
