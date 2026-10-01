@@ -1,4 +1,4 @@
-.PHONY: run back build down scrape enrich enrich-detail
+.PHONY: run back build down scrape enrich enrich-detail clean-scrap
 
 back:
 	docker compose up -d
@@ -19,3 +19,6 @@ enrich:
 
 enrich-detail:
 	cmd.exe /c start run-enrich-detail.bat
+
+clean-scrap:
+	docker compose exec postgres psql -U paulo -d scrap_carros -c "DELETE FROM cars WHERE marca = 'ERRO' AND quilometragem IS NULL;"

@@ -1,0 +1,196 @@
+============================================================
+SCRAP CARROS — BACKEND
+Documentação do Projeto (TCC)
+============================================================
+
+------------------------------------------------------------
+1. VISÃO GERAL
+------------------------------------------------------------
+
+Backend responsável por coletar, armazenar e enriquecer anúncios
+de veículos do site OLX Brasil.
+
+O processo funciona em duas etapas:
+  1. Scraping das páginas de listagem → coleta URLs dos anúncios
+  2. Enriquecimento → acessa cada anúncio individualmente e extrai
+     os dados detalhados (marca, modelo, ano, preço, etc.)
+
+Os dados ficam armazenados em um banco PostgreSQL rodando via Docker
+e são consumidos pelo projeto de análise (scrap-car-analise).
+
+------------------------------------------------------------
+2. INFRAESTRUTURA (Docker)
+------------------------------------------------------------
+
+Dois containers sobem juntos via Docker Compose:
+
+  postgres  — Banco de dados PostgreSQL 16
+              Porta externa: 7777 (acesso via pgAdmin ou psql)
+              Usuário: paulo | Senha: paulo2131 | Banco: scrap_carros
+              Os dados ficam salvos em um volume Docker (postgres_data)
+              e sobrevivem a reinicializações do container.
+
+  backend   — API FastAPI rodando com Uvicorn
+              Porta externa: 8000
+              Reinicia automaticamente ao salvar arquivos (--reload)
+
+------------------------------------------------------------
+3. ORDEM DE EXECUÇÃO DOS COMANDOS
+------------------------------------------------------------
+
+PRIMEIRA VEZ (ou após resetar o ambiente):
+
+  Passo 1 — make build
+    Reconstrói a imagem Docker do backend e sobe os containers.
+    Use este comando apenas quando mudar o Dockerfile ou o
+    requirements.txt. Demora mais que o "make back".
+
+EXECUÇÃO NORMAL (dia a dia):
+
+  Passo 1 — make back
+    Sobe os containers sem reconstruir a imagem.
+    Equivalente a: docker compose up -d
+    Sempre execute este comando antes de qualquer outro.
+
+  Passo 2 — make scrape
+    Inicia o scraper das páginas de listagem do OLX.
+    Abre um terminal separado (run-scraper.bat) e começa a
+    navegar pelas páginas de busca do OLX, coletando as URLs
+    dos anúncios e salvando registros iniciais na tabela cars
+    (com apenas os campos básicos disponíveis na listagem).
+
+    Resultado: tabela cars populada com novos registros onde
+    campos como marca, modelo, ano ainda estão NULL.
+
+  Passo 3 — make enrich-detail
+    Inicia o enriquecimento dos anúncios coletados.
+    Abre um terminal separado (run-enrich-detail.bat) e acessa
+    cada anúncio individualmente para extrair os dados completos
+    (marca, modelo, ano, quilometragem, combustivel, cambio, etc.)
+
+    Como funciona:
+      - Processa os registros em ordem crescente de ID
+      - Pula registros que já foram enriquecidos
+      - Marca com 'ERRO' os anúncios que falharam (página indisponível,
+        Cloudflare bloqueou, anúncio removido, etc.)
+      - Pode ser interrompido e retomado a qualquer momento —
+        continua de onde parou
+
+    Resultado: tabela cars com todos os campos preenchidos
+    para os anúncios que foram processados com sucesso.
+
+  Passo 4 — make clean-scrap
+    Remove da tabela os registros que são anúncios coletados
+    por engano — recomendações que aparecem fora da lista principal
+    do OLX e não possuem quilometragem nem dados válidos.
+
+    Critério de remoção:
+      marca = 'ERRO' AND quilometragem IS NULL
+
+    Esses registros:
+      - Foram capturados abaixo da lista principal de resultados
+      - São recomendações do OLX (não anúncios reais da busca)
+      - Não conseguiram ser enriquecidos pois não são anúncios normais
+      - Não têm utilidade para a análise
+
+    ATENÇÃO: este comando executa um DELETE permanente.
+    Confirme antes de rodar com:
+      SELECT COUNT(*) FROM cars WHERE marca = 'ERRO' AND quilometragem IS NULL;
+
+OUTROS COMANDOS:
+
+  make down
+    Para e remove os containers (dados do volume são preservados).
+    Use quando quiser liberar memória/CPU ou antes de reiniciar
+    o ambiente.
+
+  make enrich
+    Versão antiga do enriquecimento (pelo título do anúncio).
+    Mantido por compatibilidade — use make enrich-detail no lugar.
+
+------------------------------------------------------------
+4. RESUMO DA ORDEM COMPLETA
+------------------------------------------------------------
+
+  make build          ← apenas na primeira vez ou após mudanças no Docker
+  make back           ← sobe os containers
+  make scrape         ← coleta URLs e registros iniciais do OLX
+  make enrich-detail  ← preenche os dados de cada anúncio
+  make clean-scrap    ← remove registros inválidos (recomendações OLX)
+
+Para ciclos seguintes (sem reconstruir):
+  make back → make scrape → make enrich-detail → make clean-scrap
+
+------------------------------------------------------------
+5. ESTRUTURA DO CÓDIGO
+------------------------------------------------------------
+
+app/
+  main.py                          — Inicialização da API FastAPI e
+                                     criação das tabelas no banco
+  core/
+    config.py                      — Variáveis de ambiente (.env)
+    database.py                    — Conexão async com PostgreSQL
+  models/
+    car.py                         — Modelo SQLAlchemy da tabela cars
+  api/routes/
+    cars.py                        — Endpoints REST da API
+  services/scraper/
+    navegador.py                   — Playwright: navega pelas listagens
+                                     do OLX e coleta URLs/dados iniciais
+  scripts/enrichment/detail/
+    main.py                        — Orquestra o enriquecimento em lotes,
+                                     controla fila, sucessos e falhas
+    parser.py                      — Extrai campos do JSON embutido na
+                                     página de detalhe do OLX (adDetail)
+    repositorio.py                 — Queries de leitura/escrita no banco
+
+------------------------------------------------------------
+6. TECNOLOGIAS
+------------------------------------------------------------
+
+  Python 3.12 (dentro do container Docker)
+  FastAPI + Uvicorn       — API REST
+  SQLAlchemy (async)      — ORM e conexão com o banco
+  asyncpg                 — Driver async do PostgreSQL
+  PostgreSQL 16           — Banco de dados
+  Docker + Docker Compose — Infraestrutura
+  Playwright              — Scraping das páginas de listagem (Chromium)
+  curl_cffi               — Scraping das páginas de detalhe
+                            (impersona Chrome para bypass do Cloudflare)
+
+------------------------------------------------------------
+7. ACESSO AO BANCO DE DADOS
+------------------------------------------------------------
+
+Via pgAdmin ou qualquer cliente SQL:
+  Host:     localhost
+  Porta:    7777
+  Usuário:  paulo
+  Senha:    paulo2131
+  Banco:    scrap_carros
+
+Via terminal (psql dentro do container):
+  docker compose exec postgres psql -U paulo -d scrap_carros
+
+Tabela principal: cars
+  Consultas úteis:
+
+  -- Total de registros
+  SELECT COUNT(*) FROM cars;
+
+  -- Registros enriquecidos com sucesso
+  SELECT COUNT(*) FROM cars WHERE marca IS NOT NULL AND marca != 'ERRO';
+
+  -- Registros com falha no enriquecimento
+  SELECT COUNT(*) FROM cars WHERE marca = 'ERRO';
+
+  -- Registros ainda não enriquecidos
+  SELECT COUNT(*) FROM cars WHERE marca IS NULL;
+
+  -- Registros a serem removidos pelo clean-scrap
+  SELECT COUNT(*) FROM cars WHERE marca = 'ERRO' AND quilometragem IS NULL;
+
+============================================================
+FIM DO DOCUMENTO
+============================================================
