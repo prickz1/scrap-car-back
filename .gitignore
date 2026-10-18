@@ -12,6 +12,9 @@ __pycache__/
 # Docker
 .docker/
 
+# ML models (binários grandes, não versionar)
+modelos/*.pkl
+
 # OS
 .DS_Store
 Thumbs.db

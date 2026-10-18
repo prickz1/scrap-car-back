@@ -1,4 +1,4 @@
-.PHONY: run back build down scrape enrich enrich-detail clean-scrap
+.PHONY: run back build down scrape enrich enrich-detail clean-scrap treinar
 
 back:
 	docker compose up -d
@@ -22,3 +22,6 @@ enrich-detail:
 
 clean-scrap:
 	docker compose exec postgres psql -U paulo -d scrap_carros -c "DELETE FROM cars WHERE marca = 'ERRO' AND quilometragem IS NULL;"
+
+treinar:
+	cd treino && py -3.14 treinar_gb.py

@@ -22,10 +22,12 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ./modelos:/app/modelos_ml:ro
     environment:
       DATABASE_URL: postgresql+asyncpg://paulo:paulo2131@postgres:5432/scrap_carros
       APP_NAME: "Scrap Carros API"
       DEBUG: "true"
+      ML_MODELS_DIR: /app/modelos_ml
     depends_on:
       postgres:
         condition: service_healthy
