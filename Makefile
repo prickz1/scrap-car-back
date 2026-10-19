@@ -1,4 +1,4 @@
-.PHONY: run back build down scrape enrich enrich-detail clean-scrap treinar
+.PHONY: run back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular
 
 back:
 	docker compose up -d
@@ -25,3 +25,6 @@ clean-scrap:
 
 treinar:
 	cd treino && py -3.14 treinar_gb.py
+
+treinar-popular:
+	cd treino && py -3.14 treinar_gb_popular.py

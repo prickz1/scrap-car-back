@@ -53,35 +53,33 @@ async def avaliar(carro_id: int):
         raise HTTPException(status_code=404, detail="Carro não encontrado")
 
     def _calcular():
-        previsao = ml_model.prever(carro)
-        if previsao.isna().all():
+        previsoes = ml_model.prever(carro)
+        serie_geral = previsoes["geral"]
+        if serie_geral.isna().all():
             return None
 
-        preco_previsto = float(previsao.iloc[0])
         preco_real = float(carro["preco"].iloc[0])
-        modelo_carro = carro["modelo"].iloc[0]
+        preco_geral = round(float(serie_geral.iloc[0]))
 
-        similares = df[
-            (df["modelo"] == modelo_carro) &
-            (df["id"] != carro_id) &
-            df["preco"].notna()
-        ].copy()
-
-        top5 = []
-        if not similares.empty:
-            similares["preco_previsto"] = ml_model.prever(similares)
-            similares = similares[similares["preco_previsto"].notna()]
-            similares["desconto"] = similares["preco_previsto"] - similares["preco"]
-            cols = ["id", "ano", "preco", "preco_previsto", "desconto", "quilometragem", "cambio", "combustivel"]
-            top5 = dados.df_to_records(similares.nlargest(5, "desconto")[cols])
-
-        return {
+        resultado = {
             "id": carro_id,
             "preco_real": round(preco_real),
-            "preco_previsto": round(preco_previsto),
-            "desconto": round(preco_previsto - preco_real),
-            "similares": top5,
+            "geral": {
+                "preco_previsto": preco_geral,
+                "desconto": preco_geral - round(preco_real),
+            },
         }
+
+        if "popular" in previsoes:
+            serie_popular = previsoes["popular"]
+            if not serie_popular.isna().all():
+                preco_popular = round(float(serie_popular.iloc[0]))
+                resultado["popular"] = {
+                    "preco_previsto": preco_popular,
+                    "desconto": preco_popular - round(preco_real),
+                }
+
+        return resultado
 
     result = await asyncio.to_thread(_calcular)
     if result is None:

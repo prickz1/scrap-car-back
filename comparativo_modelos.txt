@@ -1,0 +1,122 @@
+COMPARATIVO DE MODELOS - SCRAP CARROS
+======================================
+Data: 19/10/2026
+Algoritmo: GradientBoostingRegressor (scikit-learn)
+Configuração: n_estimators=30000, learning_rate=0.01, max_depth=7, random_state=42
+
+
+------------------------------------------------------------
+MODELO GERAL
+------------------------------------------------------------
+Objetivo:    Prever preço de qualquer carro anunciado
+Dataset:     Todos os carros do banco (todas as marcas)
+Registros:   70.720 após filtros
+Treino:      56.576 | Teste: 14.144
+Tempo:       ~35 min
+
+Filtros aplicados:
+  - Remove IDs com dados inconsistentes (22 registros)
+  - Outliers de quilometragem: IQR (Q3 + 1.5 * IQR)
+
+Métricas:
+  MAE:        R$ 8.453
+  RMSE:       R$ 29.983
+  R²:         0.8642
+
+Feature importance:
+  modelo               0.2053
+  quilometragem        0.1624
+  combustivel          0.1448
+  cambio               0.1284
+  marca                0.1151
+  idade_veiculo        0.1032
+  tipo_veiculo         0.0942
+  cor                  0.0419
+  direcao              0.0047
+
+
+------------------------------------------------------------
+MODELO POPULAR
+------------------------------------------------------------
+Objetivo:    Prever preço de carros das marcas mais vendidas no Brasil
+Marcas:      Fiat, Volkswagen, Chevrolet, Ford, Hyundai, Renault, Toyota, Honda, Jeep
+Dataset:     Subconjunto do banco filtrado por essas marcas
+Registros:   58.735 após filtros
+Treino:      46.988 | Teste: 11.747
+Tempo:       ~28 min
+
+Filtros aplicados:
+  - Remove IDs com dados inconsistentes (22 registros)
+  - Filtra apenas marcas populares
+  - Outliers de quilometragem: IQR
+  - Outliers de preço POR MARCA: IQR por grupo (remove exóticos dentro de cada marca)
+
+Métricas:
+  MAE:        R$ 5.303
+  RMSE:       R$ 8.360
+  R²:         0.9509
+
+Feature importance:
+  idade_veiculo        0.3302
+  combustivel          0.0828
+  modelo               0.0683
+  marca                0.0575
+  tipo_veiculo         0.0428
+  quilometragem        0.0309
+  direcao              0.0061
+  cor                  0.0048
+
+
+------------------------------------------------------------
+COMPARATIVO
+------------------------------------------------------------
+
+Métrica        Geral          Popular        Diferença
+-----------    ----------     ----------     ----------
+MAE            R$ 8.453       R$ 5.303       -37,3%
+RMSE           R$ 29.983      R$ 8.360       -72,1%
+R²             0.8642         0.9509         +10,0%
+
+Registros      70.720         58.735         -11.985 (filtro de marcas + preço)
+Tempo treino   ~35 min        ~28 min        -7 min
+
+
+------------------------------------------------------------
+ANÁLISE
+------------------------------------------------------------
+
+1. MELHORA NO R²
+   O modelo popular explica 95% da variância dos preços contra 86%
+   do modelo geral. A especialização no segmento reduz o ruído
+   causado por marcas de luxo e exóticos com precificação distinta.
+
+2. QUEDA NO RMSE
+   O RMSE caiu de R$ 29.983 para R$ 8.360 (-72%). O modelo geral
+   sofre com outliers de preço (Ferraris, Lamborghinis) que inflam
+   o erro quadrático mesmo sendo raros no dataset.
+
+3. MUDANÇA NA FEATURE IMPORTANCE
+   No modelo geral, "modelo" é a feature mais importante (0.2053)
+   pois diferencia carros populares de luxo dentro do mesmo dataset.
+   No modelo popular, "idade_veiculo" assume o primeiro lugar (0.3302)
+   pois dentro de marcas populares a depreciação pelo tempo é o
+   principal fator de variação de preço.
+
+4. FILTRO DE PREÇO POR MARCA
+   O modelo popular aplica IQR de preço por grupo de marca,
+   removendo outliers como Amarok, Toro e versões premium que
+   distorcem a curva de preço do segmento popular.
+
+5. QUANDO USAR CADA MODELO
+   - Modelo Geral:   qualquer carro, maior cobertura, menor precisão
+   - Modelo Popular: Fiat, VW, Chevrolet, Ford, Hyundai, Renault,
+                     Toyota, Honda, Jeep — maior precisão
+
+------------------------------------------------------------
+CONCLUSÃO
+------------------------------------------------------------
+A especialização por segmento de mercado demonstra que modelos
+focados em subconjuntos homogêneos do dataset superam modelos
+generalistas em precisão. Para carros populares, que representam
+a maior parte dos anúncios, o modelo especializado é superior em
+todas as métricas avaliadas.
