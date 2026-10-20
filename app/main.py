@@ -16,7 +16,7 @@ from app.ml import modelo as ml_model
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    await asyncio.to_thread(ml_model.carregar, Path(settings.ML_MODELS_DIR))
+    asyncio.create_task(asyncio.to_thread(ml_model.carregar, Path(settings.ML_MODELS_DIR)))
     yield
 
 

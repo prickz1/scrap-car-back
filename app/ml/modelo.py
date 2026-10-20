@@ -18,6 +18,10 @@ _modelo_popular = None
 _encoder_popular = None
 
 
+def esta_carregado() -> bool:
+    return _modelo_geral is not None
+
+
 def carregar(models_dir: Path) -> None:
     global _modelo_geral, _encoder_geral, _modelo_popular, _encoder_popular
     _modelo_geral = joblib.load(models_dir / "gb_modelo.pkl")
