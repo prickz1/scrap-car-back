@@ -26,7 +26,8 @@ def carregar_df(database_url: str) -> pd.DataFrame:
         df = pd.read_sql("""
             SELECT id, preco, ano, quilometragem, modelo,
                    marca, combustivel, cambio,
-                   cor, tipo_veiculo, direcao
+                   cor, tipo_veiculo, direcao,
+                   titulo, cidade, estado, url_anuncio
             FROM cars
             WHERE preco IS NOT NULL
               AND marca IS NOT NULL

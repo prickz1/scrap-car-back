@@ -54,6 +54,22 @@ async def direcoes(marca: str, modelo: str, ano: int):
     return sorted(filtrado["direcao"].dropna().unique().tolist())
 
 
+@router.get("/anuncios")
+async def anuncios(marca: str, modelo: str, ano: int, cambio: str, combustivel: str, direcao: str):
+    df = await asyncio.to_thread(_df)
+    filtrado = df[
+        (df["marca"] == marca) &
+        (df["modelo"] == modelo) &
+        (df["ano"] == ano) &
+        (df["cambio"] == cambio) &
+        (df["combustivel"] == combustivel) &
+        (df["direcao"] == direcao) &
+        df["preco"].notna()
+    ]
+    cols = ["id", "preco", "quilometragem", "cor", "cidade", "estado", "titulo", "url_anuncio"]
+    return dados.df_to_records(filtrado[cols].sort_values("preco"))
+
+
 @router.get("/status")
 async def status():
     return {"modelo_carregado": ml_model.esta_carregado()}
