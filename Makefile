@@ -1,9 +1,7 @@
-.PHONY: run back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular
+.PHONY: back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular treinar-clf-gb
 
 back:
 	docker compose up -d
-
-run: back
 
 build:
 	docker compose up --build -d
@@ -28,3 +26,6 @@ treinar:
 
 treinar-popular:
 	cd treino && py -3.14 treinar_gb_popular.py
+
+treinar-clf-gb:
+	cd treino && py -3.14 treinar_classificador_gb.py

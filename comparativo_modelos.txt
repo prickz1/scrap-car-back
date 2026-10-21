@@ -113,10 +113,154 @@ ANÁLISE
                      Toyota, Honda, Jeep — maior precisão
 
 ------------------------------------------------------------
-CONCLUSÃO
+CONCLUSÃO (REGRESSORES)
 ------------------------------------------------------------
 A especialização por segmento de mercado demonstra que modelos
 focados em subconjuntos homogêneos do dataset superam modelos
 generalistas em precisão. Para carros populares, que representam
 a maior parte dos anúncios, o modelo especializado é superior em
 todas as métricas avaliadas.
+
+
+============================================================
+CLASSIFICADOR DE FAIXA DE PREÇO
+============================================================
+Data: 20/10/2026
+Algoritmo: GradientBoostingClassifier (scikit-learn)
+Configuração: n_estimators=5000, learning_rate=0.01, max_depth=5, random_state=42
+
+Objetivo: Classificar um carro em uma das 3 faixas de preço SEM usar o preço como entrada.
+          Serve como primeiro estágio do pipeline de 3 modelos especializados.
+
+Faixas:
+  0 — Econômico  : preço < R$ 80.000
+  1 — Médio      : R$ 80.000 ≤ preço < R$ 200.000
+  2 — Premium    : preço ≥ R$ 200.000
+
+Dataset:   70.720 registros após filtros
+Treino:    56.576 | Teste: 14.144
+Tempo:     829.7s (~13.8 min)
+
+Distribuição das faixas:
+  Econômico (<R$80k)  : 39.125 (55.3%)
+  Médio (R$80k–200k)  : 28.757 (40.7%)
+  Premium (>R$200k)   :  2.838  (4.0%)
+
+
+------------------------------------------------------------
+MÉTRICAS GERAIS
+------------------------------------------------------------
+
+Acurácia: 95.16%
+  → De cada 100 carros, o modelo acertou a faixa em ~95.
+
+Acurácia = (acertos totais) / (total de exemplos)
+
+
+------------------------------------------------------------
+RELATÓRIO POR FAIXA
+------------------------------------------------------------
+
+Métrica     Econômico   Médio      Premium    Explicação
+----------  ----------  ---------  ---------  -----------------------------------------------
+Precision       0.96       0.94       0.93    Dos que classifiquei nessa faixa, quantos eram?
+Recall          0.96       0.94       0.87    Dos que eram dessa faixa, quantos encontrei?
+F1-score        0.96       0.94       0.90    Média harmônica entre precision e recall
+Support        7.825      5.751        568    Registros reais dessa faixa no conjunto de teste
+
+Precision: "dos que eu disse que eram Premium, quantos realmente eram?" → 93%
+Recall:    "de todos os Premium reais, quantos eu encontrei?" → 87% (perdeu 13%)
+F1:        resume "quão bom é no geral nessa classe" — mais justo que média simples
+           quando as classes são desbalanceadas (Premium tem apenas 4% dos dados)
+Support:   Premium tem só 568 vs 7.825 Econômico → classe pequena, mais difícil de aprender
+
+
+------------------------------------------------------------
+MATRIZ DE CONFUSÃO
+------------------------------------------------------------
+
+  Linha = classe real | Coluna = classe prevista pelo modelo
+
+                         Econômico   Médio   Premium
+  Real Econômico           7.535      289        1
+  Real Médio                 282    5.430       39
+  Real Premium                 3       71      494
+
+Principais erros:
+  - 282 carros Médios classificados como Econômico (fronteira R$80k borrada)
+  - 71  carros Premium classificados como Médio    (fronteira R$200k borrada)
+  Faz sentido: limites arbitrários, carros nesses valores são parecidos entre si.
+
+
+------------------------------------------------------------
+FEATURE IMPORTANCE
+------------------------------------------------------------
+
+  cambio          0.3378  ← manual/automático separa bem econômico de premium
+  idade_veiculo   0.2922  ← carro novo = mais caro
+  modelo          0.1072  ← Corolla ≠ Uno
+  combustivel     0.0880  ← flex/gasolina/elétrico
+  marca           0.0591
+  tipo_veiculo    0.0564
+  quilometragem   0.0504
+  direcao         0.0052
+  cor             0.0038
+
+Câmbio sendo o mais importante faz sentido: carros econômicos são quase todos
+manuais ou automáticos básicos, enquanto premium são automáticos de dupla
+embreagem, CVT ou câmbio de alto desempenho.
+
+
+------------------------------------------------------------
+COMO O GRADIENTBOOSTING FUNCIONA
+------------------------------------------------------------
+
+O GradientBoostingClassifier treina árvores de decisão em sequência,
+onde cada nova árvore tenta corrigir os erros da anterior:
+
+  Árvore 1 → classifica, erra em alguns casos
+  Árvore 2 → foca nos erros da Árvore 1
+  Árvore 3 → foca nos erros da Árvore 2
+  ...
+  Árvore 5000 → resultado final = soma ponderada de todas
+
+O parâmetro learning_rate=0.01 faz com que cada árvore contribua com
+apenas 1% do seu "voto". Isso força o modelo a precisar de mais árvores,
+mas generaliza melhor (menos overfitting).
+
+Comparado ao RandomForest (que treina árvores em paralelo de forma
+independente), o GradientBoosting é sequencial: cada árvore aprende
+com o erro da anterior. Isso torna o GB mais preciso, porém muito
+mais lento para treinar.
+
+
+------------------------------------------------------------
+COMPARATIVO: RandomForest vs GradientBoosting (classificadores)
+------------------------------------------------------------
+
+Métrica         RandomForest    GradientBoosting    Diferença
+-----------     ------------    ----------------    ----------
+Acurácia           94.80%            95.16%          +0.36%
+Tempo treino         2.9s            829.7s          +285x
+Arquivo .pkl       354 MB             65 MB          -82%
+
+Conclusão: o GradientBoosting tem acurácia marginalmente superior (+0.36%),
+mas é 285x mais lento para treinar e gera um modelo muito menor em disco.
+Para inferência (predição), ambos são rápidos — a diferença está só no treino.
+
+Modelo escolhido para o pipeline: GradientBoostingClassifier
+Justificativa: melhor acurácia (ainda que pequena), modelo mais compacto
+em disco (65 MB vs 354 MB), e o custo de retreino é aceitável (~14 min).
+
+
+------------------------------------------------------------
+CONCLUSÃO (CLASSIFICADOR)
+------------------------------------------------------------
+O classificador de faixa atinge 95.16% de acurácia usando apenas
+características físicas do veículo (câmbio, idade, modelo, combustível),
+sem ver o preço. O erro residual (~5%) está concentrado nos carros
+próximos às fronteiras de R$80k e R$200k, onde a diferença entre faixas
+é pequena e qualquer classificador tende a errar.
+
+Este classificador será usado como primeiro estágio do pipeline:
+identificar a faixa → encaminhar para o regressor especializado naquela faixa.
