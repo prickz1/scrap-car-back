@@ -264,3 +264,140 @@ próximos às fronteiras de R$80k e R$200k, onde a diferença entre faixas
 
 Este classificador será usado como primeiro estágio do pipeline:
 identificar a faixa → encaminhar para o regressor especializado naquela faixa.
+
+
+============================================================
+REGRESSORES ESPECIALIZADOS POR FAIXA
+============================================================
+Pipeline: Classificador identifica a faixa → Regressor da faixa prevê o preço
+Algoritmo: GradientBoostingRegressor (scikit-learn)
+Configuração: n_estimators=30000, learning_rate=0.01, max_depth=7, random_state=42
+
+
+------------------------------------------------------------
+REGRESSOR FAIXA ECONÔMICO
+------------------------------------------------------------
+Data:      27/10/2026
+Filtro:    preço < R$ 80.000
+Registros: 39.125 após filtros
+Treino:    31.300 | Teste: 7.825
+Tempo:     1178.6s (~19.6 min)
+
+Faixa de preço dos dados:
+  Mínimo: R$ 1.500 | Máximo: R$ 79.999 | Média: R$ 49.996
+
+Métricas:
+  MAE:  R$ 4.413
+  RMSE: R$ 6.457
+  R²:   0.8807
+
+Feature importance:
+  idade_veiculo        0.5485  ← domina nessa faixa (depreciação é o fator principal)
+  cambio               0.1420
+  modelo               0.0859
+  quilometragem        0.0624
+  tipo_veiculo         0.0581
+  marca                0.0499
+  combustivel          0.0242
+  direcao              0.0184
+  cor                  0.0106
+
+Observação: idade_veiculo com 54.85% de importância é muito diferente do modelo
+geral (10.32%). Em carros econômicos, a depreciação pelo tempo é o fator dominante —
+um Gol 2015 vale muito menos que um Gol 2023, independente de outras características.
+
+
+------------------------------------------------------------
+REGRESSOR FAIXA MÉDIO
+------------------------------------------------------------
+Data:      27/10/2026
+Filtro:    R$ 80.000 ≤ preço < R$ 200.000
+Registros: 28.757 após filtros
+Treino:    23.005 | Teste: 5.752
+Tempo:     788.1s (~13.1 min)
+
+Faixa de preço dos dados:
+  Mínimo: R$ 80.000 | Máximo: R$ 199.999 | Média: R$ 114.937
+
+Métricas:
+  MAE:  R$ 6.326
+  RMSE: R$ 10.087
+  R²:   0.8662
+
+Feature importance:
+  idade_veiculo        0.2141
+  modelo               0.1774
+  combustivel          0.1680
+  marca                0.1208
+  quilometragem        0.1168
+  tipo_veiculo         0.1034
+  cambio               0.0783
+  cor                  0.0127
+  direcao              0.0086
+
+Observação: ao contrário do econômico (onde idade dominava com 54%), aqui as
+features são muito mais equilibradas. No segmento médio, marca, modelo e combustível
+competem com a idade — um Corolla flex 2020 e um Corolla híbrido 2020 têm preços
+bem diferentes, então o tipo de combustível ganha peso relevante (16.80%).
+
+
+------------------------------------------------------------
+REGRESSOR FAIXA PREMIUM
+------------------------------------------------------------
+Data:      27/10/2026
+Filtro:    preço ≥ R$ 200.000 + IQR no preço (limite: R$ 519.125)
+Registros: 2.550 após filtros (288 removidos pelo IQR de preço)
+Treino:    2.040 | Teste: 510
+Tempo:     59.3s (~1.0 min)
+
+Faixa de preço dos dados:
+  Mínimo: R$ 200.000 | Máximo: R$ 518.900 | Média: R$ 278.950
+
+Métricas:
+  MAE:  R$ 24.676
+  RMSE: R$ 36.852
+  R²:   0.7170
+
+Feature importance:
+  modelo               0.2793  ← BMW M3 ≠ BMW 320i, mesmo marca e ano
+  marca                0.2340  ← Mercedes ≠ Toyota no mesmo preço
+  quilometragem        0.1841  ← km tem peso maior que nos outros segmentos
+  idade_veiculo        0.0955
+  tipo_veiculo         0.0888
+  combustivel          0.0665
+  cor                  0.0313
+  direcao              0.0160
+  cambio               0.0045
+
+Observação: o R² de 0.72 é o menor entre os 3 regressores, esperado — o segmento
+premium tem poucos dados (2.550 registros) e alta variância mesmo após o IQR.
+Na primeira tentativa sem IQR, o R² foi -1.23 (pior que prever a média), pois
+Ferraris e Lamborghinis distorciam o aprendizado completamente.
+O IQR removeu 288 registros acima de R$519k e tornou o problema tratável.
+
+Feature importance revela comportamento diferente dos outros segmentos:
+  - modelo e marca dominam (50% juntos) — num BMW, o modelo específico define tudo
+  - quilometragem tem mais peso (18%) — premium zero km vs seminovo é grande diferença
+  - cambio quase não importa (0.45%) — premium são todos automáticos
+
+
+------------------------------------------------------------
+COMPARATIVO ENTRE OS 3 REGRESSORES ESPECIALIZADOS
+------------------------------------------------------------
+
+Regressor     Filtro de preço        Registros   MAE          RMSE         R²      Tempo
+-----------   --------------------   ---------   ----------   ----------   ------  ------
+Econômico     < R$ 80k               39.125      R$ 4.413     R$ 6.457     0.8807  19.6 min
+Médio         R$ 80k – R$ 200k       28.757      R$ 6.326     R$ 10.087    0.8662  13.1 min
+Premium       ≥ R$ 200k (c/ IQR)      2.550      R$ 24.676    R$ 36.852    0.7170   1.0 min
+
+Observações:
+  1. MAE como % do preço médio da faixa:
+       Econômico: R$4.413 / R$49.996  =  8.8%
+       Médio:     R$6.326 / R$114.937 =  5.5%  ← melhor proporcionalmente
+       Premium:   R$24.676 / R$278.950 =  8.8%
+
+  2. Econômico e Médio têm R² parecido (~0.87/0.87), Premium é inferior por ter
+     menos dados e maior heterogeneidade mesmo após o filtro IQR.
+
+  3. O Premium treinou em 1 min vs 20 min do Econômico — dataset 15x menor.
