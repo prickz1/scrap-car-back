@@ -95,8 +95,12 @@ async def media_preco(
     if km_max is not None:
         filtrado = filtrado[filtrado["quilometragem"].isna() | (filtrado["quilometragem"] <= km_max)]
     if filtrado.empty:
-        return {"media": None, "total": 0}
-    return {"media": round(float(filtrado["preco"].mean())), "total": len(filtrado)}
+        return {"media": None, "desvio": None, "total": 0}
+    return {
+        "media": round(float(filtrado["preco"].mean())),
+        "desvio": round(float(filtrado["preco"].std())) if len(filtrado) > 1 else None,
+        "total": len(filtrado),
+    }
 
 
 @router.get("/status")
