@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
 from app.models.car import Car  # noqa: F401 — registra o modelo em Base.metadata antes de init_db()
-from app.api.routes.cars import router as cars_router
 from app.api.routes.ml import router as ml_router
 from app.ml import modelo as ml_model
 
@@ -29,5 +28,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(cars_router, prefix="/api/v1")
 app.include_router(ml_router, prefix="/api/v1")

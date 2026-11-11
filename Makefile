@@ -1,4 +1,4 @@
-.PHONY: back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular treinar-clf-gb treinar-economico treinar-medio treinar-premium
+.PHONY: back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular
 
 back:
 	docker compose up -d
@@ -13,7 +13,7 @@ scrape:
 	cmd.exe /c start run-scraper.bat
 
 enrich:
-	docker compose exec backend python -m app.scripts.enrichment.main
+	docker compose exec backend python -m app.scripts.enrichment.detail.main
 
 enrich-detail:
 	cmd.exe /c start run-enrich-detail.bat
@@ -26,15 +26,3 @@ treinar:
 
 treinar-popular:
 	cd treino && py -3.14 treinar_gb_popular.py
-
-treinar-clf-gb:
-	cd treino && py -3.14 treinar_classificador_gb.py
-
-treinar-economico:
-	cd treino && py -3.14 treinar_gb_economico.py
-
-treinar-medio:
-	cd treino && py -3.14 treinar_gb_medio.py
-
-treinar-premium:
-	cd treino && py -3.14 treinar_gb_premium.py

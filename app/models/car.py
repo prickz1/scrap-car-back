@@ -21,9 +21,7 @@ class Car(Base):
     cambio: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     cor: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     tipo_veiculo: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    potencia_motor: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     direcao: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    portas: Mapped[Optional[int]] = mapped_column(nullable=True)
 
     # Localização
     cidade: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

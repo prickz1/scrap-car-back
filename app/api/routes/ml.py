@@ -153,16 +153,6 @@ async def prever(
             if not serie_popular.isna().all():
                 resultado["popular"] = round(float(serie_popular.iloc[0]))
 
-        if "faixas" in previsoes:
-            faixas_result = previsoes["faixas"]
-            preco_faixa = faixas_result["preco"].iloc[0]
-            faixa_label = faixas_result["faixa"].iloc[0]
-            if pd.notna(preco_faixa):
-                resultado["faixas"] = {
-                    "preco": round(float(preco_faixa)),
-                    "faixa": faixa_label,
-                }
-
         return resultado
 
     if not ml_model.esta_carregado():
