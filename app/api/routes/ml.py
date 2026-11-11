@@ -76,6 +76,29 @@ async def anuncios(
     return dados.df_to_records(filtrado[cols].sort_values("preco"))
 
 
+@router.get("/media")
+async def media_preco(
+    marca: str, modelo: str, ano: int, cambio: str, combustivel: str, direcao: str,
+    km_min: int = 0, km_max: int | None = None,
+):
+    df = await asyncio.to_thread(_df)
+    filtrado = df[
+        (df["marca"] == marca) &
+        (df["modelo"] == modelo) &
+        (df["ano"] == ano) &
+        (df["cambio"] == cambio) &
+        (df["combustivel"] == combustivel) &
+        (df["direcao"] == direcao) &
+        df["preco"].notna() &
+        (df["quilometragem"].isna() | (df["quilometragem"] >= km_min))
+    ]
+    if km_max is not None:
+        filtrado = filtrado[filtrado["quilometragem"].isna() | (filtrado["quilometragem"] <= km_max)]
+    if filtrado.empty:
+        return {"media": None, "total": 0}
+    return {"media": round(float(filtrado["preco"].mean())), "total": len(filtrado)}
+
+
 @router.get("/status")
 async def status():
     return {"modelo_carregado": ml_model.esta_carregado()}
