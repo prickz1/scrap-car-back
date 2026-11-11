@@ -55,7 +55,10 @@ async def direcoes(marca: str, modelo: str, ano: int):
 
 
 @router.get("/anuncios")
-async def anuncios(marca: str, modelo: str, ano: int, cambio: str, combustivel: str, direcao: str):
+async def anuncios(
+    marca: str, modelo: str, ano: int, cambio: str, combustivel: str, direcao: str,
+    km_min: int = 0, km_max: int | None = None,
+):
     df = await asyncio.to_thread(_df)
     filtrado = df[
         (df["marca"] == marca) &
@@ -64,8 +67,11 @@ async def anuncios(marca: str, modelo: str, ano: int, cambio: str, combustivel: 
         (df["cambio"] == cambio) &
         (df["combustivel"] == combustivel) &
         (df["direcao"] == direcao) &
-        df["preco"].notna()
+        df["preco"].notna() &
+        (df["quilometragem"].isna() | (df["quilometragem"] >= km_min))
     ]
+    if km_max is not None:
+        filtrado = filtrado[filtrado["quilometragem"].isna() | (filtrado["quilometragem"] <= km_max)]
     cols = ["id", "preco", "quilometragem", "cor", "cidade", "estado", "titulo", "url_anuncio"]
     return dados.df_to_records(filtrado[cols].sort_values("preco"))
 
