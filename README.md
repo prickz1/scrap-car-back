@@ -27,12 +27,11 @@ scrap-car-back/
 │   │   ├── modelo.py    → carrega .pkl e faz previsão
 │   │   └── dados.py     → lê banco → DataFrame em memória
 │   └── api/routes/
-│       ├── cars.py      → CRUD de carros
-│       └── ml.py        → /ml/marcas, /ml/avaliar/{id} …
+│       └── ml.py        → /ml/marcas, /ml/prever, /ml/media …
 ├── treino/
 │   ├── database.py      → conexão direta ao banco (sync)
-│   ├── preparar_dados.py→ filtra outliers, codifica features
-│   └── treinar_gb.py    → treina e salva os .pkl
+│   ├── treinar_gb.py    → treina Modelo Geral e salva os .pkl
+│   └── treinar_gb_popular.py → treina Modelo Popular e salva os .pkl
 ├── modelos/             → gb_modelo.pkl + gb_encoder.pkl (não versionados)
 ├── docker-compose.yml
 ├── Dockerfile
@@ -68,9 +67,8 @@ Sobe o PostgreSQL na porta `7777` e a API na porta `8000`.
 ### 3. Popular o banco (scraping)
 
 ```bash
-make scrape        # raspa anúncios da OLX
-make enrich        # enriquece dados faltantes
-make enrich-detail # enriquece detalhes adicionais
+make scrape        # raspa anúncios da OLX (páginas de listagem)
+make enrich-detail # enriquece cada anúncio com dados completos
 make clean-scrap   # remove registros com erro de scraping
 ```
 
@@ -84,7 +82,12 @@ Com o banco populado:
 make treinar
 ```
 
-Conecta em `localhost:7777`, treina um **GradientBoostingRegressor** com 30.000 árvores e salva os arquivos em `modelos/`. Demora aproximadamente 1–2 horas. R² esperado: ~0.86.
+Conecta em `localhost:7777`, treina um **GradientBoostingRegressor** com 30.000 árvores e salva os arquivos em `modelos/`.
+
+| Modelo | Comando | Tempo | R² | MAE |
+|--------|---------|-------|----|-----|
+| Geral (todas as marcas) | `make treinar` | ~35 min | 0.86 | R$ 8.453 |
+| Popular (9 marcas) | `make treinar-popular` | ~28 min | 0.95 | R$ 5.303 |
 
 ### 5. Reiniciar a API para carregar o modelo
 
@@ -109,8 +112,8 @@ Abre em `http://localhost:8501`.
 | Ordem | Comando | O que faz |
 |-------|---------|-----------|
 | 1 | `make back` | Sobe banco + API |
-| 2 | `make scrape` → `enrich` → `clean-scrap` | Popula o banco |
-| 3 | `make treinar` | Treina o modelo ML |
+| 2 | `make scrape` → `enrich-detail` → `clean-scrap` | Popula o banco |
+| 3 | `make treinar` + `make treinar-popular` | Treina os modelos ML |
 | 4 | `make down && make back` | Reinicia API com modelo carregado |
 | 5 | `cd ../scrap-car-front && make run` | Sobe o front |
 

@@ -105,8 +105,9 @@ OUTROS COMANDOS:
     o ambiente.
 
   make enrich
-    Versão antiga do enriquecimento (pelo título do anúncio).
-    Mantido por compatibilidade — use make enrich-detail no lugar.
+    Atalho para o enriquecimento via Docker Compose (sem abrir
+    terminal separado). Equivalente ao make enrich-detail, mas
+    executa no terminal atual em vez de abrir um novo.
 
 ------------------------------------------------------------
 4. RESUMO DA ORDEM COMPLETA
@@ -134,7 +135,16 @@ app/
   models/
     car.py                         — Modelo SQLAlchemy da tabela cars
   api/routes/
-    cars.py                        — Endpoints REST da API
+    ml.py                          — Endpoints REST para ML:
+                                     marcas, modelos, anos, câmbios,
+                                     combustíveis, direções, prever,
+                                     media, anuncios, status
+  ml/
+    modelo.py                      — Carrega os modelos .pkl e expõe
+                                     a função prever()
+    dados.py                       — Carrega o DataFrame do banco em
+                                     memória (cache singleton) e aplica
+                                     filtros de IQR de quilometragem
   services/scraper/
     navegador.py                   — Playwright: navega pelas listagens
                                      do OLX e coleta URLs/dados iniciais
@@ -145,11 +155,23 @@ app/
                                      página de detalhe do OLX (adDetail)
     repositorio.py                 — Queries de leitura/escrita no banco
 
+treino/
+  database.py                      — Conexão síncrona com o banco para
+                                     carregar dados de treino
+  treinar_gb.py                    — Treina o Modelo Geral (todas as marcas)
+  treinar_gb_popular.py            — Treina o Modelo Popular (marcas populares)
+
+modelos/                           — Arquivos .pkl gerados pelo treino
+  gb_modelo.pkl                    — Modelo Geral serializado
+  gb_encoder.pkl                   — Encoder do Modelo Geral
+  gb_modelo_popular.pkl            — Modelo Popular serializado
+  gb_encoder_popular.pkl           — Encoder do Modelo Popular
+
 ------------------------------------------------------------
 6. TECNOLOGIAS
 ------------------------------------------------------------
 
-  Python 3.12 (dentro do container Docker)
+  Python 3.12 (container Docker) / Python 3.14 (treino local)
   FastAPI + Uvicorn       — API REST
   SQLAlchemy (async)      — ORM e conexão com o banco
   asyncpg                 — Driver async do PostgreSQL
