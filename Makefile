@@ -1,4 +1,4 @@
-.PHONY: back build down scrape enrich enrich-detail clean-scrap treinar treinar-popular
+.PHONY: back build down scrape retomar enrich enrich-detail clean-scrap treinar treinar-popular
 
 back:
 	docker compose up -d
@@ -11,6 +11,10 @@ down:
 
 scrape:
 	cmd.exe /c start run-scraper.bat
+
+retomar:
+	$(if $(PRECO),,$(error Informe o preco inicial: make retomar PRECO=105900))
+	cmd.exe /c start run-scraper.bat $(PRECO)
 
 enrich:
 	docker compose exec backend python -m app.scripts.enrichment.detail.main

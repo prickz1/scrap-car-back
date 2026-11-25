@@ -74,6 +74,12 @@ make clean-scrap   # remove registros com erro de scraping
 
 > O scraping pode demorar várias horas dependendo do volume.
 
+Se o scraping for interrompido (ex.: bloqueio da OLX), retome a partir do último preço mostrado no log (`Lote N | ps=...`):
+
+```bash
+make retomar PRECO=105900
+```
+
 ### 4. Treinar o modelo de ML
 
 Com o banco populado:
